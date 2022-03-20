@@ -1,0 +1,99 @@
+Criando um container MariaDB Docker-CLI
+-----------------------------------------
+    sudo docker container run -d --restart always -e MYSQL_ROOT_PASSWORD=P@ssw0rd -e MYSQL_DATABASE=wordpress -v /home/CONTAINERs/wordpress/database/:/var/lib/mysql --name SGDB01MariaDB -p 3306:3306 mariadb:latest
+
+
+Melhorando a segurança do MySQLMariaDB
+---------------------------------------
+    sudo docker container exec -it SGDB01MariaDB mysql_secure_installation
+
+        - Você pode definir uma senha para contas root.
+
+        - Você pode remover contas root que podem ser acessadas de fora do host local.
+
+        - Você pode remover contas de usuários anônimos.
+
+        - Você pode remover o banco de dados de teste, que por padrão pode ser acessado por usuários anônimos.
+
+
+Concedendo acesso ao usuário root
+----------------------------------
+    sudo docker container exec -it SGDB01MariaDB mysql -u root -p
+
+    Comandos usados para conceder acesso root na console MYSQL
+    -----------------------------------------------------------
+        - GRANT ALL ON *.* TO root@'%' IDENTIFIED BY 'P@ssw0rd';
+
+        - FLUSH PRIVILEGES;
+
+        - EXIT;
+
+
+Como alternativa, o snapd pode ser instalado a partir da linha de comando:
+---------------------------------------------------------------------------
+    $ sudo apt update
+
+    $ sudo apt install snapd
+
+    Faça logout e login novamente ou reinicie o sistema para garantir que os caminhos do snap sejam atualizados corretamente.
+
+    Para testar seu sistema, instale o snap hello-world e verifique se ele funciona corretamente:
+
+        $ sudo snap install hello-world
+
+        $ hello-world
+        
+
+MySQL Workbench
+----------------
+    MySQL Workbench é uma ferramenta de desenvolvimento, administração e modelagem de dados para MySQL. Além de editar e executar consultas e scripts SQL, ele suporta o design de bancos de dados MySQL por meio de um diagrama EER, que é usado para gerar scripts SQL. O Workbench também suporta a migração de muitos produtos RDBMS para MySQL.
+
+        sudo snap install mysql-workbench-community
+
+
+    Permitindo pacotes Snap que são sandboxed como o MySQLWorkbench no AppArmor
+    -----------------------------------------------------------------------------
+        sudo snap connect mysql-workbench-community:password-manager-service :password-manager-service
+
+
+    Se você usa conexões, o Workbench usa o Gerenciador de Senhas e o ssh para funcionar corretamente. Portanto, é necessário dar essa permissão explicitamente.
+    
+        - snap connect mysql-workbench-community:password-manager-service
+
+        - snap connect mysql-workbench-community:ssh-keys
+
+    Ou se você usa arquivos em discos externos ou também precisa imprimir arquivos.
+
+        - snap connect mysql-workbench-community:cups-control
+
+        - snap connect mysql-workbench-community:removable-media
+
+
+Você pode criar uma rede e iniciar o processo desatachado nessa rede, uma vez que a rede bridge não funciona.
+--------------------------------------------------------------------------------------------------------------
+    Depois disso, você pode se conectar a partir de um contêiner diferente executando o mysql desta forma:
+
+        $ docker network create mariadb-net
+
+        $ docker run --net mariadb-net --name mariadb-c1 -e MYSQL_ROOT_PASSWORD=root -d mariadb:10.5
+
+        $ docker run -it --network mariadb-net --rm mariadb:10.5 mysql -hmariadb-c1 -uroot -proot
+
+
+sudo docker container run -e WORDPRESS_DB_USER=root -e WORDPRESS_DB_PASSWORD=P@ssw0rd -p 8081:80 -v /home/CONTAINERs/wordpress/html:/var/www/html --link SGDB01MariaDB:mysql --name SGC01Wordpress -d wordpress
+
+
+docker container rm -f $(docker container ls -a -q)
+
+docker rmi -f $(docker images -q)
+
+sudo rm -rf /home/CONTAINERs/wordpress/database/*
+
+sudo rm -rf /home/CONTAINERs/wordpress/html/*
+
+docker inspect -f '{{ .NetworkSettings.IPAddress}}' SGC01Wordpress
+
+Fontes: 
+    https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+    https://snapcraft.io/mysql-workbench-community
+    https://upcloud.com/community/tutorials/wordpress-with-docker/

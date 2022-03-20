@@ -1,0 +1,32 @@
+Backup e restauração de bancos de dados com mysqldump
+------------------------------------------------------
+    Vamos mostrar nesta aula como realizar duas tarefas extremamente importantes: o backup (e a restauração) dos bancos de dados criados com MySQL. Faremos o backup de um banco de dados que está rodando no MySQL em um servidor Linux. Para realizar backup e restauração rodando o MySQL  no Microsoft Windows, use o PHPMyAdmin.
+
+    Para isso vamos usar o comando mysqldump, que será executado no terminal do Linux, de acordo com a sintaxe a seguir (criando o arquivo de backup cujo nome você deverá especificar, com a extensão .sql):
+
+        mysqldump -u root -p nome_banco > arquivo_backup.sql
+
+    Por exemplo, para realizarmos o backup do banco de dados db_Biblioteca no diretório do usuário fabio usamos o comando a seguir
+
+        mysqldump -u root -p db_Biblioteca > /home/fabio/db_Biblioteca.sql
+
+    Você pode abrir o arquivo resultante com algum editor de textos no terminal para ver seu conteúdo.
+
+
+Restauração do Banco de Dados
+-------------------------------
+
+    Se o banco de dados apresentar algum problema e precisar ser restaurado a partir do backup, siga o procedimento a seguir:
+
+    Crie um banco de dados novo no servidor, com o nome que desejar. Por exemplo, “teste-restore”;
+
+    Execute o seguinte comando (no terminal):
+
+        mysql -u root -p banco_criado < backup.sql
+
+    Exemplo: Crie um novo banco denominado teste-restore; Restaure o banco de dados db_Biblioteca digitando o comando a seguir:
+
+        mysql -u root -p teste-restore < /home/fabio/db_Biblioteca.sql
+
+Fonte:
+    http://www.bosontreinamentos.com.br/mysql/mysql-mysqldump-backup-e-restauracao-do-banco-de-dados-25/

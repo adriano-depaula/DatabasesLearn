@@ -1,0 +1,376 @@
+Exibindo estado da conexão de rede
+-----------------------------------
+    $ sudo nmcli connection show
+
+
+ Deletando uma conexão de rede com o nome LAN01-ETHERNET-ENP3S0
+---------------------------------------------------------------
+	$ sudo nmcli connection delete LAN01-ETHERNET-ENP3S0
+
+
+Atribuindo endereçamento IPv4 NetworkManager tanto faz usar a interface gráfica ou linha de comando
+----------------------------------------------------------------------------------------------------
+	$ sudo nmcli connection add con-name LAN-ETHERNET-ENP3S0 ifname enp3s0 type ethernet ip4 172.168.0.1/24 ip4 172.168.0.2/24 ip4 172.168.0.3/24 ip4 172.168.0.4/24 ip4 172.168.0.5/24 gw4 172.168.0.1 ipv4.dns "8.8.8.8 8.8.4.4" 802-3-ethernet.mtu auto
+
+
+Configurando conexão de rede ethernet DHCP
+-------------------------------------------
+	$ sudo nmcli connection add con-name WAN-ETHERNET-ENP2S0 type ethernet autoconnect true ifname enp2s0
+
+
+Reiniciando interface de rede para validar as configurações
+------------------------------------------------------------
+    $ sudo nmcli connection down LAN && sleep 3 && nmcli connection up
+
+
+Para modificar um perfil de conexão ethernet derrube a interface ethernet
+--------------------------------------------------------------------------
+    $ sudo nmcli connection down LAN
+    
+
+Modificando uma conexão de rede
+---------------------------------
+	- Adicionando gateway padrão: nmcli connection modify LAN-ETHERNET-ENP3S0 +gw4 172.168.0.1
+
+	- Adicionar mais um servidor DNS: nmcli connection modify LAN-ETHERNET-ENP3S0 +ipv4.dns 4.4.2.2
+
+	- Remover mais um servidor DNS: nmcli connection modify LAN-ETHERNET-ENP3S0 -ipv4.dns 4.4.2.2
+
+	- Remover todos servidores DNS: nmcli connection modify LAN-ETHERNET-ENP3S0 -ipv4.dns "8.8.8.8 8.8.4.4"
+
+
+Acessar https://www.oracle.com/downloads/, IT Infrastructure e baixar Oracle Linux with the Unbreakable Enterprise Kernel
+--------------------------------------------------------------------------------------------------------------------------
+
+Criar uma máquina virtual Oracle Linux 8 com o nome OL8.5DB, logo em seguida clique em configurar para ajustar a VM de acordo com as informações abaixo:
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+	- 6656 MB de RAM (6,5 GiB)
+	- Disco dinâmicamente alocado de 65GiB
+	- Processador 4 núcleos
+	- Rede Bridge
+	- Sem audio
+	- Selecionar a imagem Oracle Linux 8.5 baixada
+
+	
+Deixe a máquina OL8.5DB selecionada e clique no PLAY do virtualbox para iniciar a VM OL8.5DB
+---------------------------------------------------------------------------------------------
+
+
+Dê enter para iniciar o processo de boot
+-----------------------------------------
+
+
+Selecione o idioma Português Brasil e clique em Pronto
+-------------------------------------------------------
+
+
+Em Localização Hora e Data
+---------------------------
+	- No mapa da America Brasil, selecione São Paulo e clique em Pronto
+	
+
+Em configuração do usuário:
+----------------------------
+	 clique em Senha do root e defina uma senha de sua preferência, confirme e clique em Pronto duas vezes
+	
+	 clique em Criação de usuário e defina as informações abaixo:
+		- Nome Completo: Administrador de Base de Dados Oracle 21cXE
+		- Nome do usuário: oracle
+		- Marque a caixa Tornar esse usuário Administrador
+		- Defina uma senha para o usuário e confirme clicando em Pronto duas vezes
+		
+		
+Em seleção de Programas
+------------------------
+	Selecione Sever e marque as caixas:
+		- Gerenciamento Remota para Linux (SSH)
+		- Ferramenta de Desenvolvimento (Development Tools)
+
+		
+Em Destino da instalação
+------------------------
+	Em configuração de armazenamento marque Personalizada e clique em Pronto
+	
+	Novos ponto de montagem usarão o esquema de particionamento seguinte:
+		- Selecione Partição padrão, clique no botão + e defina:
+		- Ponto de montagem selecione /
+		- Capacidade desejada +63GiB e clique em Adicionar ponto de montagem
+		- Em Sistema do arquivo selecione EXT4
+		- Em Rótulo informe rootfs
+		
+		- Clique no botão de +
+		- Em ponto de Montagem selecione swap e clique em Adicionar ponto de montagem
+		- Em Rótulo informe swapfs
+		- Clique em pronto
+		
+		Em resumo de mudanças clique em Aceitar mudanças
+		
+		
+Em Rede e nome do hosts
+-----------------------
+	Em Ethernet (enp0s3), clique no botão para VM pegar o endereço de IP dinamicamente
+	Em Nome do host digite o nome que você quiser dar para VM, no meu caso é vm01oldb.dominio.local, clique em aplicar e clique em Pronto
+	
+	
+Agora é só clicar em Iniciar a Instalação e aguardar finalizar e depois clique em Reiniciar o Sistema
+------------------------------------------------------------------------------------------------------
+	
+		
+
+Editar /etc/hosts do host virtualbox e da VM, conforme as entradas descritas abaixo:
+-------------------------------------------------------------------------------------
+	sudo vim /etc/hosts
+		
+		#-------------------------------------------------------------------------------------#
+		# Endereço IP                | Nome totalmente qualificado (FQDN) | Apelido (Alias)   #
+		# -------------------------- | ---------------------------------- | ----------------- #
+		# Endereço IPv4 loopback     |                                    |                   #
+		# -------------------------- | ---------------------------------- | ----------------- #
+		127.0.0.1						localhost.localdomain					localhost       
+		# -------------------------- | ---------------------------------- | ----------------- #
+		# Endereço IPv4 rede local                                                            #
+		# -------------------------- | ---------------------------------- | ----------------- #
+		172.168.0.1						tufb460mplus.dominio.local				tufb460mplus     
+		# -------------------------- | ---------------------------------- | ----------------- #
+		172.168.0.2						vm01oldb.dominio.local					vm01oldb        
+		# -------------------------- | ---------------------------------- | ----------------- #
+		# Endereço IPv6 loopback     |                                    |                   #
+		# -------------------------- | ---------------------------------- | ----------------- #
+		::1								localhost.localdomain					localhost6      
+		# -------------------------- | ---------------------------------- | ----------------- #
+		
+
+Use o comando ping para testar a comunicação usando nome definido no arquivo /etc/hosts tanto na VM quanto no host Virtualbox
+------------------------------------------------------------------------------------------------------------------------------
+	Do host Virtualbox para a VM
+		$ ping -c4 vm01oldb
+		
+	Da VM para o host Virtualbox
+		$ ping -c4 tufb460mplus
+		
+		
+Editar arquivo /etc/ssh/sshd_config da VM e descomentar a linha "X11DisplayOffset 10"
+--------------------------------------------------------------------------------------
+	$ sudo /etc/ssh/sshd_config
+
+	
+Se o SSH reclamar que não está conseguindo conectar delete o arquivo .ssh/know_hosts
+-------------------------------------------------------------------------------------
+	$ sudo .ssh/know_hosts
+	
+
+Reiniciar o serviço sshd e verificar se estado está carregado e ativo
+----------------------------------------------------------------------
+	$ sudo systemctl restart sshd && sudo systemctl status sshd
+	
+		
+
+Habilitando repositório CodeReady para instalar xorg-x11-apps
+-------------------------------------------------------------
+	$ sudo dnf config-manager --enable ol8_codeready_builder
+
+
+Buscar Dependências
+--------------------
+	$ sudo dnf search epel
+	$ sudo dnf search xorg-x11
+	$ sudo dnf search openjdk
+	$ sudo dnf search oracle-database-preinstall
+
+
+Atualizar sistema, instalar dependências e atualizar novamente
+----------------------------------------------------------------
+	$ sudo dnf -y update && sudo dnf -y install wget oracle-epel-release-el8.x86_64 xorg-x11-server-Xorg xorg-x11-xauth xorg-x11-apps xterm java-1.8.0-openjdk-devel java-17-openjdk-devel oracle-database-preinstall-21c.x86_64 && sudo dnf -y update
+
+	
+Criar um arquivo em /etc/profile.d/environmentVariable.sh e configurar as variáveis de ambiente JAVA e Oracle
+--------------------------------------------------------------------------------------------------------------
+	$ sudo /etc/profile.d/environmentVariable.sh
+		
+		#!/bin/bash
+		# Variáveis de ambiente JAVA
+		# ----------------------------
+		export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.322.b06-2.el8_5.x86_64
+		#export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-17.0.2.0.8-4.el8_5.x86_64
+		export PATH=$JAVA_HOME/bin:$PATH
+		
+		# Variáveis de ambiente Oracle Database 21cXE
+		# -------------------------------------------------
+		export ORACLE_SID=XE
+		export ORAENV_ASK=NO
+		export ORACLE_HOME=/opt/oracle/product/21c/dbhomeXE
+		export TNS_ADMIN=$ORACLE_HOME/network/admin
+		export PATH=$ORACLE_HOME/bin:$PATH
+
+Tornando /etc/profile.d/environmentVariable.sh executável
+----------------------------------------------------------
+	$ sudo chmod +x /etc/profile.d/environmentVariable.sh
+
+
+Desligar a máquina e fazer um Snapshot com nome sistemaPreparadoParaOracleDB
+---------------------------------------------------------------------------
+
+Ligar a máquina virtual em segundo plano
+-----------------------------------------
+
+
+Abra o terminal do host Virtualbox e acesse a máquina virtual usando ssh com a opção -X
+----------------------------------------------------------------------------------------
+	$ ssh -X oracle@vm01oldb
+	
+Execute o xterm e xclock para ver se forward ssh está funcionando
+------------------------------------------------------------------
+	$ xclock
+	$ xterm
+	
+	
+Veja se as variáveis de ambiente estão retornando o caminho configurado, a versão do JAVA padrão e se a JVM está de acordo com a versão padrão
+-----------------------------------------------------------------------------------------------------------------------------------------------
+	$ echo  $ORACLE_HOME
+	$ echo  $TNS_ADMIN
+	$ echo  $JAVA_HOME
+	$ java -version
+	$ javac -version
+	
+	
+Acesse https://www.oracle.com/technical-resources/ ou https://otn.oracle.com, clique em Database Downloads, Database Express Edition, logo em seguida em, Oracle Database 21c Express Edition for Linux x64 ( OL8 )
+
+ou
+
+Clique com o botão direito em Oracle Database 21c Express Edition for Linux x64 ( OL8 ), selecione copiar endereço do link e use o wget para baixar
+----------------------------------------------------------------------------------------------------------------------------------------------------
+	$ sudo wget https://download.oracle.com/otn-pub/otn_software/db-express/oracle-database-xe-21c-1.0-1.ol8.x86_64.rpm
+	
+	
+Mude para o usuário root será solicitado para digitar a senha informe a senha do usuário oracle
+------------------------------------------------------------------------------------------------
+	$ sudo -s
+	
+
+Após concluir do download instale o banco de dados Oracle usando dnf para resolver as dependências
+---------------------------------------------------------------------------------------------------
+	# dnf -y install oracle-database-xe-21c-1.0-1.ol8.x86_64.rpm
+	
+OBS:
+-----	
+	- O banco de dados XE é configurado com configurações padrão. Não é necessário modificar estes parâmetros, a menos que você tenha requisitos específicos. Faça uma cópia da configuração arquivo /etc/sysconfig/oracle-xe-21c.conf antes de modificá-lo. Faça suas modificações após a instalação do RPM e antes de configurar o banco de dados.
+	
+	
+Execute o script de configuração do serviço oracle-xe-21c
+----------------------------------------------------------
+	# /etc/init.d/oracle-xe-21c configure
+	
+
+A Oracle recomenda que você configure o sistema para iniciar o banco de dados Oracle automaticamente quando o sistema é iniciado e para desligá-lo automaticamente quando o sistema desliga.
+--------------------------------------------------
+	# systemctl daemon-reload
+	# systemctl enable --now oracle-xe-21c
+	
+
+Execute o seguinte comando para ver o estado do banco de dados:	
+----------------------------------------------------------------------
+	#  systemctl status oracle-xe-21c
+
+		
+Execute o seguinte comando para iniciar o listener e o banco de dados:	
+----------------------------------------------------------------------
+	#  systemctl start oracle-xe-21c
+
+
+Execute o seguinte comando para parar o listener e o banco de dados:	
+----------------------------------------------------------------------
+	#  systemctl stop oracle-xe-21c
+	
+	
+Execute o seguinte comando para reiniciar o listener e o banco de dados:	
+----------------------------------------------------------------------
+	#  systemctl restart oracle-xe-21c
+
+
+Para disponibilizar o EM Express para clientes remotos, inicie o SQL*Plus e faça login como SYSTEM e execute este procedimento:
+--------------------------------------------------
+	$ sqlplus system
+	Informe a senha do usuário system: SYSTEM_senha
+	SQL> EXEC DBMS_XDB.SETLISTENERLOCALACCESS(FALSE);
+
+
+Desligar e iniciar usando SQL*Plus
+----------------------------------
+	$ sqlplus / as sysdba
+	SQL> SHUTDOWN IMMEDIATE
+
+
+Para iniciar o banco de dados, emita os comandos:
+-------------------------------------------------
+	SQL> STARTUP
+	SQL> ALTER PLUGGABLE DATABASE ALL OPEN;
+
+
+Habilite o cockpit para gerenciar a vm01oldb via console WEB
+--------------------------------------------------------------
+sudo systemctl enable --now cockpit.socket
+
+
+Abra o navegado do host Virtualbox e acesse o endereço https://vm01oldb.dominio.local:9090
+------------------------------------------------------------------------------------------
+
+
+Crie uma regra para liberar a porta 5500 acessando Rede, Firewall > Editar regras e zonas > Adicionar serviços
+-------------------------------------------------------------------------------------------
+
+
+Em adicionar serviços para zona public, marque Portas customizadas
+-------------------------------------------------------------------
+	Em TCP adicione: 5500-6000
+	Em UDP adicione: deixe vazio
+	Em ID adicione: oracle-em
+	Clique em Adicionar Portas
+
+
+Liste todas regras e conceda acesso na porta 5500
+--------------------------------------------------
+$ sudo firewall-cmd --list-all
+$ sudo firewall-cmd --permanent --add-port=5500/tcp
+
+ou
+
+Liste todas regras na zona pública e conceda acesso na porta 5500
+------------------------------------------------------------------
+$ sudo firewall-cmd --zone=public --list-all
+$ sudo firewall-cmd --zone=public --add-port=5500/tcp
+
+Recarrega as regras do firewalld
+---------------------------------
+$ sudo firewall-cmd --reload
+
+
+Abra o navegado do host Virtualbox e acesse o endereço https://vm01oldb.dominio.local:5500/em
+----------------------------------------------------------------------------------------------
+
+
+Quando você instala o Oracle Database XE, o usuário oracle recebe privilégios SYSDBA. Você pode usar os seguintes comandos para se conectar ao banco de dados.
+----------------------------------------------------
+	$ sqlplus / as sysdba
+	
+	
+O listener do banco de dados Net Services para Oracle 21c XE permite que você se conecte ao banco de dados por TCP/IP da mesma máquina ou de outras máquinas na rede. A configuração do Listener pode ser visualizada usando os seguintes comandos executados no prompt de comando:
+----------------------------------------------------
+	$ lsnrctl status
+	
+	
+Você pode se conectar ao contêiner raiz do banco de dados de um computador cliente com SQL*Plus usando os seguintes comandos:
+-----------------------------------------------------
+	$ sqlplus system@vm01oldb.dominio.local:1521
+	
+	
+Você pode se conectar ao banco de dados conectável padrão XEPDB1 usando os seguintes comandos:
+------------------------------------------------------
+	$ sqlplus system@vm01oldb.dominio.local:1521/XEPDB1
+	
+	
+Referências:
+------------
+	https://community.oracle.com/tech/apps-infra/discussion/4335138/missing-xorg-x11-apps-xclock-in-ol8-2
+	https://docs.oracle.com/en/database/oracle/oracle-database/21/xeinl/database-express-edition-installation-guide-linux.pdf
+	https://www.clienteoba.com.br/knowledgebase/630/Abrir-portas-no-firewalld.html
+	https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-8-pt

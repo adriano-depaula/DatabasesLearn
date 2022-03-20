@@ -1,0 +1,9 @@
+.*
+!.gitignore
+*/Scripts/
+videoLearn/
+*/*.pdf
+*/*.PDF
+*/*.png
+*/*.PNG
+*/ORACLE_HOME.txt
